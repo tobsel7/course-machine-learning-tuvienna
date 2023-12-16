@@ -1,6 +1,6 @@
 import pandas as pd
 from sklearn.compose import make_column_transformer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 
 yes_no_mapping = {"n": False, "N": False, "y": True, "Y": True}
 initial_list_status_mapping = {'w': 'Whole loan', 'f': 'Fractional loan'}
@@ -44,9 +44,19 @@ column_transformer = make_column_transformer(
 )
 
 def preprocess(data):
+    # extract X an y
+    X = data.drop("grade", axis=1)
+    y = data["grade"]
+
+    # clean X
     for column in yes_no_features:
-        if column in data.columns:
-            data[column] = data[column].map(yes_no_mapping)
-        data['initial_list_status'] = data['initial_list_status'].replace(initial_list_status_mapping)
-        data.drop("policy_code", axis=1)
-    return pd.DataFrame(column_transformer.fit_transform(data), columns=column_transformer.get_feature_names_out())
+        if column in X.columns:
+            X[column] = X[column].map(yes_no_mapping)
+        X["initial_list_status"] = X["initial_list_status"].replace(initial_list_status_mapping)
+        X.drop("policy_code", axis=1)
+    X = pd.DataFrame(column_transformer.fit_transform(X), columns=column_transformer.get_feature_names_out())
+
+    # encode y
+    y = LabelEncoder().fit_transform(y)
+
+    return X, y

@@ -80,11 +80,20 @@ column_transformer = make_column_transformer(
 )
 
 def preprocess(data):
-    data.drop(data[data["Month of absence"] == 0].index, inplace=True)
-    data[boolean_features] = data[boolean_features].astype(bool)
-    data["Day of the week"] = data["Day of the week"].replace(weekday_mapping).astype("category")
-    data["Month of absence"] = data["Month of absence"].replace(month_mapping).astype("category")
-    data["Seasons"] = data["Seasons"].replace(season_mapping).astype("category")
-    data["Education"] = data["Education"].replace(education_mapping).astype("category")
-    data["Work load Average/day"] = data["Work load Average/day"].round(0).astype(int)
-    return pd.DataFrame(column_transformer.fit_transform(data), columns=column_transformer.get_feature_names_out())
+    # drop missing values
+    data = data[data["Month of absence"] != 0]
+
+    # extract X and y
+    X = data.drop(["Reason for absence", "Absenteeism time in hours"], axis=1)
+    y = data["Reason for absence"]
+
+    # clean X
+    X[boolean_features] = X[boolean_features].astype(bool)
+    X["Day of the week"] = X["Day of the week"].replace(weekday_mapping).astype("category")
+    X["Month of absence"] = X["Month of absence"].replace(month_mapping).astype("category")
+    X["Seasons"] = X["Seasons"].replace(season_mapping).astype("category")
+    X["Education"] = X["Education"].replace(education_mapping).astype("category")
+    X["Work load Average/day"] = X["Work load Average/day"].round(0).astype(int)
+    X = pd.DataFrame(column_transformer.fit_transform(data), columns=column_transformer.get_feature_names_out())
+
+    return X, y
